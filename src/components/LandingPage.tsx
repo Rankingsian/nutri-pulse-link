@@ -77,6 +77,7 @@ const LandingPage = () => {
           className="w-full" 
           variant={type === "nurse" ? "nurse" : "healthcare"}
           size="lg"
+          onClick={() => window.location.href = type === "nurse" ? "/nurse-dashboard" : "/patient-dashboard"}
         >
           Sign In
         </Button>

@@ -82,7 +82,11 @@ const LandingPage = () => {
           Sign In
         </Button>
         <div className="text-center">
-          <Button variant="link" className="text-sm text-muted-foreground">
+          <Button 
+            variant="link" 
+            className="text-sm text-muted-foreground"
+            onClick={() => window.location.href = "/forgot-password"}
+          >
             Forgot password?
           </Button>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { api, HealthRecord, NutritionPlan } from "@/lib/api";
 import { 
   Heart, 
   Pill, 
@@ -20,12 +22,20 @@ import {
   MessageCircle,
   Home,
   TrendingUp,
-  Calendar
+  Calendar,
+  LogOut,
+  Loader2
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const PatientDashboard = () => {
   const { toast } = useToast();
+  const { user, patientData, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
+  const [nutritionPlans, setNutritionPlans] = useState<NutritionPlan[]>([]);
   const [medications, setMedications] = useState([
     { id: 1, name: "Metformin", dosage: "500mg", time: "8:00 AM", taken: false, urgent: false },
     { id: 2, name: "Lisinopril", dosage: "10mg", time: "8:00 AM", taken: true, urgent: false },
@@ -53,6 +63,43 @@ const PatientDashboard = () => {
     { id: 2, type: "appointment", message: "Nurse check-in scheduled for 2:00 PM", urgent: false },
     { id: 3, type: "message", message: "New message from Nurse Johnson", urgent: false },
   ];
+
+  useEffect(() => {
+    const fetchPatientData = async () => {
+      if (!patientData) return;
+      
+      try {
+        setIsLoading(true);
+        const [recordsResponse, plansResponse] = await Promise.all([
+          api.getPatientRecords(patientData.id),
+          api.getNutritionPlans(patientData.id)
+        ]);
+        
+        setHealthRecords(recordsResponse.records);
+        setNutritionPlans(plansResponse.plans);
+      } catch (error) {
+        console.error('Failed to fetch patient data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load your health data",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPatientData();
+  }, [patientData, toast]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+  };
 
   const toggleMedication = (id: number) => {
     setMedications(prev => 
@@ -107,15 +154,26 @@ const PatientDashboard = () => {
                 Chat with Nurse
               </Button>
             </Link>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" />
+            </Button>
             <div className="text-sm text-muted-foreground">
-              Welcome back, <span className="font-medium text-foreground">Sarah Chen</span>
+              Welcome back, <span className="font-medium text-foreground">{user?.name || 'Patient'}</span>
             </div>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-6">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Loading your health data...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Medication Reminders */}
@@ -254,39 +312,90 @@ const PatientDashboard = () => {
                     <Activity className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle>Latest Vitals</CardTitle>
-                    <CardDescription>Your most recent health measurements from your nurse</CardDescription>
+                    <CardTitle>Latest Health Records</CardTitle>
+                    <CardDescription>Your most recent health records from your nurse</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-3 bg-background/50 rounded-lg border">
-                    <div className="text-sm text-muted-foreground">Blood Pressure</div>
-                    <div className="text-lg font-semibold text-foreground">118/76 mmHg</div>
-                    <div className="text-xs text-green-600">Normal</div>
+                {healthRecords.length > 0 ? (
+                  healthRecords.slice(0, 3).map((record) => (
+                    <div key={record.id} className="p-4 bg-background/50 rounded-lg border border-border/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-foreground">
+                          Checkup Notes
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(record.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="text-sm text-foreground mb-2">
+                        {record.checkup_notes}
+                      </div>
+                      {record.prescriptions && (
+                        <div className="text-sm text-muted-foreground">
+                          <strong>Prescriptions:</strong> {record.prescriptions}
+                        </div>
+                      )}
+                      {record.nurse && (
+                        <div className="text-xs text-muted-foreground mt-2">
+                          By: {record.nurse.user?.name || 'Nurse'}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No health records available yet.</p>
+                    <p className="text-sm">Your nurse will add records after checkups.</p>
                   </div>
-                  <div className="p-3 bg-background/50 rounded-lg border">
-                    <div className="text-sm text-muted-foreground">Blood Sugar</div>
-                    <div className="text-lg font-semibold text-foreground">95 mg/dL</div>
-                    <div className="text-xs text-green-600">Normal</div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Nutrition Plans */}
+            <Card className="shadow-lg border-0 bg-gradient-to-br from-card to-muted/30">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center">
+                    <Utensils className="w-5 h-5 text-secondary" />
                   </div>
-                  <div className="p-3 bg-background/50 rounded-lg border">
-                    <div className="text-sm text-muted-foreground">Temperature</div>
-                    <div className="text-lg font-semibold text-foreground">98.6°F</div>
-                    <div className="text-xs text-green-600">Normal</div>
-                  </div>
-                  <div className="p-3 bg-background/50 rounded-lg border">
-                    <div className="text-sm text-muted-foreground">Weight</div>
-                    <div className="text-lg font-semibold text-foreground">152 lbs</div>
-                    <div className="text-xs text-blue-600">Stable</div>
+                  <div>
+                    <CardTitle>Nutrition Plans</CardTitle>
+                    <CardDescription>Your personalized nutrition recommendations</CardDescription>
                   </div>
                 </div>
-                <div className="p-3 bg-background/50 rounded-lg border">
-                  <div className="text-sm text-muted-foreground mb-2">Recent Notes from Nurse Johnson</div>
-                  <div className="text-sm text-foreground">"Patient is responding well to current medication. Continue with prescribed diet plan. Next checkup scheduled for Friday."</div>
-                  <div className="text-xs text-muted-foreground mt-2">Updated 2 hours ago</div>
-                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {nutritionPlans.length > 0 ? (
+                  nutritionPlans.slice(0, 2).map((plan) => (
+                    <div key={plan.id} className="p-4 bg-background/50 rounded-lg border border-border/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-foreground">
+                          Diet Plan
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(plan.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="text-sm text-foreground">
+                        {plan.diet_plan}
+                      </div>
+                      {plan.nurse && (
+                        <div className="text-xs text-muted-foreground mt-2">
+                          By: {plan.nurse.user?.name || 'Nurse'}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Utensils className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No nutrition plans available yet.</p>
+                    <p className="text-sm">Your nurse will create personalized plans for you.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -370,6 +479,7 @@ const PatientDashboard = () => {
             </Card>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

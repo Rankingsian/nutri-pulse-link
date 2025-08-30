@@ -1,15 +1,37 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Heart, Shield, Users, Activity, Stethoscope, Pill, MessageCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { Heart, Shield, Users, Activity, Stethoscope, Pill, MessageCircle, Loader2 } from "lucide-react";
 import heroImage from "@/assets/healthcare-hero.jpg";
 
 const LandingPage = () => {
   const [loginType, setLoginType] = useState<"nurse" | "patient" | null>(null);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [registerForm, setRegisterForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "patient" as "nurse" | "patient",
+    age: "",
+    gender: "male" as "male" | "female" | "other",
+    specialization: "",
+    hospital: "",
+    medical_history: "",
+    nutrition_needs: ""
+  });
+
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { login, register } = useAuth();
 
   const features = [
     {
@@ -33,6 +55,78 @@ const LandingPage = () => {
       description: "HIPAA-compliant messaging with your care team"
     }
   ];
+
+  const handleLogin = async () => {
+    if (!loginForm.email || !loginForm.password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await login(loginForm);
+      toast({
+        title: "Success",
+        description: "Login successful!",
+      });
+      navigate(loginType === "nurse" ? "/nurse-dashboard" : "/patient-dashboard");
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!registerForm.name || !registerForm.email || !registerForm.password || !registerForm.age) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (registerForm.role === "nurse" && (!registerForm.specialization || !registerForm.hospital)) {
+      toast({
+        title: "Error",
+        description: "Specialization and hospital are required for nurses",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const registerData = {
+        ...registerForm,
+        age: parseInt(registerForm.age),
+      };
+      await register(registerData);
+      toast({
+        title: "Success",
+        description: "Registration successful!",
+      });
+      setIsRegisterOpen(false);
+      setLoginType(registerForm.role);
+    } catch (error) {
+      toast({
+        title: "Registration Failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const LoginForm = ({ type }: { type: "nurse" | "patient" }) => (
     <Card className="w-full max-w-md mx-auto shadow-xl bg-gradient-to-br from-card to-muted/30 border-0">
@@ -62,6 +156,8 @@ const LandingPage = () => {
             type="email" 
             placeholder="Enter your email"
             className="border-border/50 focus:border-primary transition-colors"
+            value={loginForm.email}
+            onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
           />
         </div>
         <div className="space-y-2">
@@ -71,21 +167,31 @@ const LandingPage = () => {
             type="password" 
             placeholder="Enter your password"
             className="border-border/50 focus:border-primary transition-colors"
+            value={loginForm.password}
+            onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
           />
         </div>
         <Button 
           className="w-full" 
           variant={type === "nurse" ? "nurse" : "healthcare"}
           size="lg"
-          onClick={() => window.location.href = type === "nurse" ? "/nurse-dashboard" : "/patient-dashboard"}
+          onClick={handleLogin}
+          disabled={isLoading}
         >
-          Sign In
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Signing In...
+            </>
+          ) : (
+            "Sign In"
+          )}
         </Button>
         <div className="text-center">
           <Button 
             variant="link" 
             className="text-sm text-muted-foreground"
-            onClick={() => window.location.href = "/forgot-password"}
+            onClick={() => navigate("/forgot-password")}
           >
             Forgot password?
           </Button>
@@ -106,23 +212,15 @@ const LandingPage = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">First Name</Label>
-            <Input 
-              id="firstName" 
-              placeholder="John"
-              className="border-border/50 focus:border-primary transition-colors"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name</Label>
-            <Input 
-              id="lastName" 
-              placeholder="Doe"
-              className="border-border/50 focus:border-primary transition-colors"
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="name">Full Name</Label>
+          <Input 
+            id="name" 
+            placeholder="John Doe"
+            className="border-border/50 focus:border-primary transition-colors"
+            value={registerForm.name}
+            onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="registerEmail">Email</Label>
@@ -131,6 +229,8 @@ const LandingPage = () => {
             type="email" 
             placeholder="john.doe@example.com"
             className="border-border/50 focus:border-primary transition-colors"
+            value={registerForm.email}
+            onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
           />
         </div>
         <div className="space-y-2">
@@ -140,10 +240,120 @@ const LandingPage = () => {
             type="password" 
             placeholder="Create a secure password"
             className="border-border/50 focus:border-primary transition-colors"
+            value={registerForm.password}
+            onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
           />
         </div>
-        <Button className="w-full" variant="secondary" size="lg">
-          Create Account
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select 
+              value={registerForm.role} 
+              onValueChange={(value: "nurse" | "patient") => setRegisterForm({ ...registerForm, role: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="patient">Patient</SelectItem>
+                <SelectItem value="nurse">Nurse</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="age">Age</Label>
+            <Input 
+              id="age" 
+              type="number" 
+              placeholder="25"
+              className="border-border/50 focus:border-primary transition-colors"
+              value={registerForm.age}
+              onChange={(e) => setRegisterForm({ ...registerForm, age: e.target.value })}
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="gender">Gender</Label>
+          <Select 
+            value={registerForm.gender} 
+            onValueChange={(value: "male" | "female" | "other") => setRegisterForm({ ...registerForm, gender: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="male">Male</SelectItem>
+              <SelectItem value="female">Female</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {registerForm.role === "nurse" && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="specialization">Specialization</Label>
+              <Input 
+                id="specialization" 
+                placeholder="e.g., Nutrition and Dietetics"
+                className="border-border/50 focus:border-primary transition-colors"
+                value={registerForm.specialization}
+                onChange={(e) => setRegisterForm({ ...registerForm, specialization: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hospital">Hospital</Label>
+              <Input 
+                id="hospital" 
+                placeholder="e.g., City General Hospital"
+                className="border-border/50 focus:border-primary transition-colors"
+                value={registerForm.hospital}
+                onChange={(e) => setRegisterForm({ ...registerForm, hospital: e.target.value })}
+              />
+            </div>
+          </>
+        )}
+
+        {registerForm.role === "patient" && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="medical_history">Medical History (Optional)</Label>
+              <Input 
+                id="medical_history" 
+                placeholder="Any relevant medical history"
+                className="border-border/50 focus:border-primary transition-colors"
+                value={registerForm.medical_history}
+                onChange={(e) => setRegisterForm({ ...registerForm, medical_history: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="nutrition_needs">Nutrition Needs (Optional)</Label>
+              <Input 
+                id="nutrition_needs" 
+                placeholder="Any dietary requirements"
+                className="border-border/50 focus:border-primary transition-colors"
+                value={registerForm.nutrition_needs}
+                onChange={(e) => setRegisterForm({ ...registerForm, nutrition_needs: e.target.value })}
+              />
+            </div>
+          </>
+        )}
+
+        <Button 
+          className="w-full" 
+          variant="secondary" 
+          size="lg"
+          onClick={handleRegister}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating Account...
+            </>
+          ) : (
+            "Create Account"
+          )}
         </Button>
       </CardContent>
     </Card>

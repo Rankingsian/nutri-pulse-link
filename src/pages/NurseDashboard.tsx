@@ -6,6 +6,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Stethoscope, 
   Users, 
@@ -489,6 +492,61 @@ const NurseDashboard = () => {
                     </div>
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+
+            {/* Patient Vitals Entry */}
+            <Card className="shadow-lg border-0 bg-gradient-to-br from-card to-muted/30">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                    <Activity className="w-4 h-4 text-primary" />
+                  </div>
+                  <CardTitle className="text-lg">Record Patient Vitals</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select patient" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sarah-chen">Sarah Chen</SelectItem>
+                    <SelectItem value="james-miller">James Miller</SelectItem>
+                    <SelectItem value="maria-lopez">Maria Lopez</SelectItem>
+                    <SelectItem value="david-brown">David Brown</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Blood Pressure</Label>
+                    <Input placeholder="120/80" className="h-8 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Blood Sugar</Label>
+                    <Input placeholder="100 mg/dL" className="h-8 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Temperature</Label>
+                    <Input placeholder="98.6°F" className="h-8 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Weight</Label>
+                    <Input placeholder="150 lbs" className="h-8 text-sm" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Notes/Symptoms</Label>
+                  <textarea 
+                    className="w-full p-2 text-sm border border-input bg-background rounded-md resize-none"
+                    rows={2}
+                    placeholder="Patient observations..."
+                  />
+                </div>
+                <Button className="w-full h-8 text-sm">
+                  <Activity className="w-3 h-3 mr-1" />
+                  Save Vitals
+                </Button>
               </CardContent>
             </Card>
 

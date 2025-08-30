@@ -246,71 +246,47 @@ const PatientDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Vitals & Symptoms */}
+            {/* Latest Vitals (Read-only) */}
             <Card className="shadow-lg border-0 bg-gradient-to-br from-card to-muted/30">
               <CardHeader>
                 <div className="flex items-center space-x-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center">
-                    <Activity className="w-5 h-5 text-destructive" />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle>Vitals & Symptoms</CardTitle>
-                    <CardDescription>Record your health measurements</CardDescription>
+                    <CardTitle>Latest Vitals</CardTitle>
+                    <CardDescription>Your most recent health measurements from your nurse</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bloodPressure">Blood Pressure</Label>
-                    <Input
-                      id="bloodPressure"
-                      placeholder="120/80"
-                      value={vitals.bloodPressure}
-                      onChange={(e) => setVitals(prev => ({ ...prev, bloodPressure: e.target.value }))}
-                    />
+                  <div className="p-3 bg-background/50 rounded-lg border">
+                    <div className="text-sm text-muted-foreground">Blood Pressure</div>
+                    <div className="text-lg font-semibold text-foreground">118/76 mmHg</div>
+                    <div className="text-xs text-green-600">Normal</div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bloodSugar">Blood Sugar (mg/dL)</Label>
-                    <Input
-                      id="bloodSugar"
-                      placeholder="100"
-                      value={vitals.bloodSugar}
-                      onChange={(e) => setVitals(prev => ({ ...prev, bloodSugar: e.target.value }))}
-                    />
+                  <div className="p-3 bg-background/50 rounded-lg border">
+                    <div className="text-sm text-muted-foreground">Blood Sugar</div>
+                    <div className="text-lg font-semibold text-foreground">95 mg/dL</div>
+                    <div className="text-xs text-green-600">Normal</div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="temperature">Temperature (°F)</Label>
-                    <Input
-                      id="temperature"
-                      placeholder="98.6"
-                      value={vitals.temperature}
-                      onChange={(e) => setVitals(prev => ({ ...prev, temperature: e.target.value }))}
-                    />
+                  <div className="p-3 bg-background/50 rounded-lg border">
+                    <div className="text-sm text-muted-foreground">Temperature</div>
+                    <div className="text-lg font-semibold text-foreground">98.6°F</div>
+                    <div className="text-xs text-green-600">Normal</div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="weight">Weight (lbs)</Label>
-                    <Input
-                      id="weight"
-                      placeholder="150"
-                      value={vitals.weight}
-                      onChange={(e) => setVitals(prev => ({ ...prev, weight: e.target.value }))}
-                    />
+                  <div className="p-3 bg-background/50 rounded-lg border">
+                    <div className="text-sm text-muted-foreground">Weight</div>
+                    <div className="text-lg font-semibold text-foreground">152 lbs</div>
+                    <div className="text-xs text-blue-600">Stable</div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Additional Notes</Label>
-                  <Input
-                    id="notes"
-                    placeholder="Any symptoms or concerns..."
-                    value={vitals.notes}
-                    onChange={(e) => setVitals(prev => ({ ...prev, notes: e.target.value }))}
-                  />
+                <div className="p-3 bg-background/50 rounded-lg border">
+                  <div className="text-sm text-muted-foreground mb-2">Recent Notes from Nurse Johnson</div>
+                  <div className="text-sm text-foreground">"Patient is responding well to current medication. Continue with prescribed diet plan. Next checkup scheduled for Friday."</div>
+                  <div className="text-xs text-muted-foreground mt-2">Updated 2 hours ago</div>
                 </div>
-                <Button onClick={handleVitalsSubmit} className="w-full" variant="healthcare">
-                  <Activity className="w-4 h-4" />
-                  Save Vitals
-                </Button>
               </CardContent>
             </Card>
           </div>

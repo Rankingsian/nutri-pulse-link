@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -438,6 +438,17 @@ const LandingPage = () => {
                 <Heart className="w-5 h-5" />
                 Patient Portal
               </Button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link to="/nurse-registration" className="flex-1">
+                <Button 
+                  variant="link" 
+                  className="text-secondary text-lg w-full"
+                >
+                  New nurse? Register here →
+                </Button>
+              </Link>
             </div>
 
             <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>

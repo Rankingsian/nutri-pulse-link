@@ -1,42 +1,77 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Heart, Shield, Users, Activity, Stethoscope, Pill, MessageCircle, Loader2 } from "lucide-react";
 import heroImage from "@/assets/healthcare-hero.jpg";
 
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+const registerSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(50, "Name must be less than 50 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters").max(100, "Password must be less than 100 characters"),
+  role: z.enum(["patient", "nurse"]),
+  age: z.number().min(1, "Age must be at least 1").max(150, "Age must be less than 150"),
+  gender: z.enum(["male", "female", "other"]),
+  specialization: z.string().optional(),
+  hospital: z.string().optional(),
+  medical_history: z.string().optional(),
+  nutrition_needs: z.string().optional(),
+}).refine((data) => {
+  if (data.role === "nurse") {
+    return data.specialization && data.specialization.length > 0 && data.hospital && data.hospital.length > 0;
+  }
+  return true;
+}, {
+  message: "Specialization and hospital are required for nurses",
+  path: ["specialization"],
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
+type RegisterForm = z.infer<typeof registerSchema>;
+
 const LandingPage = () => {
   const [loginType, setLoginType] = useState<"nurse" | "patient" | null>(null);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [registerForm, setRegisterForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    role: "patient" as "nurse" | "patient",
-    age: "",
-    gender: "male" as "male" | "female" | "other",
-    specialization: "",
-    hospital: "",
-    medical_history: "",
-    nutrition_needs: ""
+
+  const loginForm = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
-  // Optimized input handlers to prevent cursor jumping
-  const handleLoginChange = (field: keyof typeof loginForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLoginForm(prev => ({ ...prev, [field]: e.target.value }));
-  };
-
-  const handleRegisterChange = (field: keyof typeof registerForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRegisterForm(prev => ({ ...prev, [field]: e.target.value }));
-  };
+  const registerForm = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "patient",
+      age: 25,
+      gender: "male",
+      specialization: "",
+      hospital: "",
+      medical_history: "",
+      nutrition_needs: "",
+    },
+  });
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -65,19 +100,13 @@ const LandingPage = () => {
     }
   ];
 
-  const handleLogin = async () => {
-    if (!loginForm.email || !loginForm.password) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const onLogin = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      await login(loginForm);
+      await login({
+        email: data.email,
+        password: data.password,
+      });
       toast({
         title: "Success",
         description: "Login successful!",
@@ -94,30 +123,20 @@ const LandingPage = () => {
     }
   };
 
-  const handleRegister = async () => {
-    if (!registerForm.name || !registerForm.email || !registerForm.password || !registerForm.age) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (registerForm.role === "nurse" && (!registerForm.specialization || !registerForm.hospital)) {
-      toast({
-        title: "Error",
-        description: "Specialization and hospital are required for nurses",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const onRegister = async (data: RegisterForm) => {
     setIsLoading(true);
     try {
       const registerData = {
-        ...registerForm,
-        age: parseInt(registerForm.age),
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        role: data.role,
+        age: data.age,
+        gender: data.gender,
+        specialization: data.specialization,
+        hospital: data.hospital,
+        medical_history: data.medical_history,
+        nutrition_needs: data.nutrition_needs,
       };
       await register(registerData);
       toast({
@@ -125,7 +144,7 @@ const LandingPage = () => {
         description: "Registration successful!",
       });
       setIsRegisterOpen(false);
-      setLoginType(registerForm.role);
+      setLoginType(data.role);
     } catch (error) {
       toast({
         title: "Registration Failed",
@@ -158,44 +177,62 @@ const LandingPage = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input 
-            id="email" 
-            type="email" 
-            placeholder="Enter your email"
-            className="border-border/50 focus:border-primary transition-colors"
-            value={loginForm.email}
-            onChange={handleLoginChange('email')}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <Input 
-            id="password" 
-            type="password" 
-            placeholder="Enter your password"
-            className="border-border/50 focus:border-primary transition-colors"
-            value={loginForm.password}
-            onChange={handleLoginChange('password')}
-          />
-        </div>
-        <Button 
-          className="w-full" 
-          variant={type === "nurse" ? "nurse" : "healthcare"}
-          size="lg"
-          onClick={handleLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Signing In...
-            </>
-          ) : (
-            "Sign In"
-          )}
-        </Button>
+        <Form {...loginForm}>
+          <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
+            <FormField
+              control={loginForm.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="email" 
+                      placeholder="Enter your email"
+                      className="border-border/50 focus:border-primary transition-colors"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={loginForm.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Enter your password"
+                      className="border-border/50 focus:border-primary transition-colors"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button 
+              type="submit"
+              className="w-full" 
+              variant={type === "nurse" ? "nurse" : "healthcare"}
+              size="lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </form>
+        </Form>
         <div className="text-center">
           <Button 
             variant="link" 
@@ -221,149 +258,222 @@ const LandingPage = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
-          <Input 
-            id="name" 
-            placeholder="John Doe"
-            className="border-border/50 focus:border-primary transition-colors"
-            value={registerForm.name}
-            onChange={handleRegisterChange('name')}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="registerEmail">Email</Label>
-          <Input 
-            id="registerEmail" 
-            type="email" 
-            placeholder="john.doe@example.com"
-            className="border-border/50 focus:border-primary transition-colors"
-            value={registerForm.email}
-            onChange={handleRegisterChange('email')}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="registerPassword">Password</Label>
-          <Input 
-            id="registerPassword" 
-            type="password" 
-            placeholder="Create a secure password"
-            className="border-border/50 focus:border-primary transition-colors"
-            value={registerForm.password}
-            onChange={handleRegisterChange('password')}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Select 
-              value={registerForm.role} 
-              onValueChange={(value: "nurse" | "patient") => setRegisterForm({ ...registerForm, role: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="patient">Patient</SelectItem>
-                <SelectItem value="nurse">Nurse</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="age">Age</Label>
-            <Input 
-              id="age" 
-              type="number" 
-              placeholder="25"
-              className="border-border/50 focus:border-primary transition-colors"
-              value={registerForm.age}
-              onChange={handleRegisterChange('age')}
+        <Form {...registerForm}>
+          <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
+            <FormField
+              control={registerForm.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="John Doe"
+                      className="border-border/50 focus:border-primary transition-colors"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="gender">Gender</Label>
-          <Select 
-            value={registerForm.gender} 
-            onValueChange={(value: "male" | "female" | "other") => setRegisterForm({ ...registerForm, gender: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select gender" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="male">Male</SelectItem>
-              <SelectItem value="female">Female</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {registerForm.role === "nurse" && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="specialization">Specialization</Label>
-              <Input 
-                id="specialization" 
-                placeholder="e.g., Nutrition and Dietetics"
-                className="border-border/50 focus:border-primary transition-colors"
-                value={registerForm.specialization}
-                onChange={handleRegisterChange('specialization')}
+            <FormField
+              control={registerForm.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="email" 
+                      placeholder="john.doe@example.com"
+                      className="border-border/50 focus:border-primary transition-colors"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={registerForm.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Create a secure password"
+                      className="border-border/50 focus:border-primary transition-colors"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={registerForm.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Role</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="patient">Patient</SelectItem>
+                        <SelectItem value="nurse">Nurse</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={registerForm.control}
+                name="age"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Age</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="25"
+                        className="border-border/50 focus:border-primary transition-colors"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="hospital">Hospital</Label>
-              <Input 
-                id="hospital" 
-                placeholder="e.g., City General Hospital"
-                className="border-border/50 focus:border-primary transition-colors"
-                value={registerForm.hospital}
-                onChange={handleRegisterChange('hospital')}
-              />
-            </div>
-          </>
-        )}
+            <FormField
+              control={registerForm.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gender</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {registerForm.watch("role") === "nurse" && (
+              <>
+                <FormField
+                  control={registerForm.control}
+                  name="specialization"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Specialization</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., Nutrition and Dietetics"
+                          className="border-border/50 focus:border-primary transition-colors"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={registerForm.control}
+                  name="hospital"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hospital</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., City General Hospital"
+                          className="border-border/50 focus:border-primary transition-colors"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
-        {registerForm.role === "patient" && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="medical_history">Medical History (Optional)</Label>
-              <Input 
-                id="medical_history" 
-                placeholder="Any relevant medical history"
-                className="border-border/50 focus:border-primary transition-colors"
-                value={registerForm.medical_history}
-                onChange={handleRegisterChange('medical_history')}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nutrition_needs">Nutrition Needs (Optional)</Label>
-              <Input 
-                id="nutrition_needs" 
-                placeholder="Any dietary requirements"
-                className="border-border/50 focus:border-primary transition-colors"
-                value={registerForm.nutrition_needs}
-                onChange={handleRegisterChange('nutrition_needs')}
-              />
-            </div>
-          </>
-        )}
+            {registerForm.watch("role") === "patient" && (
+              <>
+                <FormField
+                  control={registerForm.control}
+                  name="medical_history"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Medical History (Optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Any relevant medical history"
+                          className="border-border/50 focus:border-primary transition-colors"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={registerForm.control}
+                  name="nutrition_needs"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nutrition Needs (Optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Any dietary requirements"
+                          className="border-border/50 focus:border-primary transition-colors"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
-        <Button 
-          className="w-full" 
-          variant="secondary" 
-          size="lg"
-          onClick={handleRegister}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating Account...
-            </>
-          ) : (
-            "Create Account"
-          )}
-        </Button>
+            <Button 
+              type="submit"
+              className="w-full" 
+              variant="secondary" 
+              size="lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

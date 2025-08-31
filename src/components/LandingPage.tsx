@@ -29,6 +29,15 @@ const LandingPage = () => {
     nutrition_needs: ""
   });
 
+  // Optimized input handlers to prevent cursor jumping
+  const handleLoginChange = (field: keyof typeof loginForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLoginForm(prev => ({ ...prev, [field]: e.target.value }));
+  };
+
+  const handleRegisterChange = (field: keyof typeof registerForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRegisterForm(prev => ({ ...prev, [field]: e.target.value }));
+  };
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const { login, register } = useAuth();
@@ -157,7 +166,7 @@ const LandingPage = () => {
             placeholder="Enter your email"
             className="border-border/50 focus:border-primary transition-colors"
             value={loginForm.email}
-            onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+            onChange={handleLoginChange('email')}
           />
         </div>
         <div className="space-y-2">
@@ -168,7 +177,7 @@ const LandingPage = () => {
             placeholder="Enter your password"
             className="border-border/50 focus:border-primary transition-colors"
             value={loginForm.password}
-            onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+            onChange={handleLoginChange('password')}
           />
         </div>
         <Button 
@@ -219,7 +228,7 @@ const LandingPage = () => {
             placeholder="John Doe"
             className="border-border/50 focus:border-primary transition-colors"
             value={registerForm.name}
-            onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+            onChange={handleRegisterChange('name')}
           />
         </div>
         <div className="space-y-2">
@@ -230,7 +239,7 @@ const LandingPage = () => {
             placeholder="john.doe@example.com"
             className="border-border/50 focus:border-primary transition-colors"
             value={registerForm.email}
-            onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+            onChange={handleRegisterChange('email')}
           />
         </div>
         <div className="space-y-2">
@@ -241,7 +250,7 @@ const LandingPage = () => {
             placeholder="Create a secure password"
             className="border-border/50 focus:border-primary transition-colors"
             value={registerForm.password}
-            onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+            onChange={handleRegisterChange('password')}
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -268,7 +277,7 @@ const LandingPage = () => {
               placeholder="25"
               className="border-border/50 focus:border-primary transition-colors"
               value={registerForm.age}
-              onChange={(e) => setRegisterForm({ ...registerForm, age: e.target.value })}
+              onChange={handleRegisterChange('age')}
             />
           </div>
         </div>
@@ -298,7 +307,7 @@ const LandingPage = () => {
                 placeholder="e.g., Nutrition and Dietetics"
                 className="border-border/50 focus:border-primary transition-colors"
                 value={registerForm.specialization}
-                onChange={(e) => setRegisterForm({ ...registerForm, specialization: e.target.value })}
+                onChange={handleRegisterChange('specialization')}
               />
             </div>
             <div className="space-y-2">
@@ -308,7 +317,7 @@ const LandingPage = () => {
                 placeholder="e.g., City General Hospital"
                 className="border-border/50 focus:border-primary transition-colors"
                 value={registerForm.hospital}
-                onChange={(e) => setRegisterForm({ ...registerForm, hospital: e.target.value })}
+                onChange={handleRegisterChange('hospital')}
               />
             </div>
           </>
@@ -323,7 +332,7 @@ const LandingPage = () => {
                 placeholder="Any relevant medical history"
                 className="border-border/50 focus:border-primary transition-colors"
                 value={registerForm.medical_history}
-                onChange={(e) => setRegisterForm({ ...registerForm, medical_history: e.target.value })}
+                onChange={handleRegisterChange('medical_history')}
               />
             </div>
             <div className="space-y-2">
@@ -333,7 +342,7 @@ const LandingPage = () => {
                 placeholder="Any dietary requirements"
                 className="border-border/50 focus:border-primary transition-colors"
                 value={registerForm.nutrition_needs}
-                onChange={(e) => setRegisterForm({ ...registerForm, nutrition_needs: e.target.value })}
+                onChange={handleRegisterChange('nutrition_needs')}
               />
             </div>
           </>

@@ -55,6 +55,7 @@ const LandingPage = () => {
       email: "",
       password: "",
     },
+    mode: "onChange"
   });
 
   const registerForm = useForm<RegisterForm>({
@@ -71,6 +72,7 @@ const LandingPage = () => {
       medical_history: "",
       nutrition_needs: "",
     },
+    mode: "onChange"
   });
 
   const navigate = useNavigate();
@@ -178,7 +180,7 @@ const LandingPage = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <Form {...loginForm}>
-          <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
+          <form onSubmit={loginForm.handleSubmit(onLogin)} onReset={(e) => e.preventDefault()} className="space-y-4">
             <FormField
               control={loginForm.control}
               name="email"
@@ -259,7 +261,7 @@ const LandingPage = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <Form {...registerForm}>
-          <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
+          <form onSubmit={registerForm.handleSubmit(onRegister)} onReset={(e) => e.preventDefault()} className="space-y-4">
             <FormField
               control={registerForm.control}
               name="name"
@@ -459,7 +461,7 @@ const LandingPage = () => {
             <Button 
               type="submit"
               className="w-full" 
-              variant="secondary" 
+              variant="healthcare" 
               size="lg"
               disabled={isLoading}
             >

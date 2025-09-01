@@ -55,7 +55,8 @@ const NurseRegistration = () => {
       licenseNumber: "",
       phone: "",
       department: ""
-    }
+    },
+    mode: "onChange"
   });
 
   const specializations = [
@@ -126,7 +127,7 @@ const NurseRegistration = () => {
         
         <Card className="shadow-xl bg-gradient-to-br from-card to-muted/30 border-0">
           <CardHeader className="text-center pb-6">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-secondary to-secondary-glow flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
               <UserPlus className="w-10 h-10 text-white" />
             </div>
             <CardTitle className="text-3xl text-foreground">Join Our Nursing Team</CardTitle>
@@ -137,7 +138,7 @@ const NurseRegistration = () => {
           
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} onReset={(e) => e.preventDefault()} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -384,7 +385,7 @@ const NurseRegistration = () => {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    variant="nurse"
+                    variant="healthcare"
                     size="lg"
                     disabled={isLoading}
                   >

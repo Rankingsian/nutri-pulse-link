@@ -24,7 +24,8 @@ import {
   TrendingUp,
   Calendar,
   LogOut,
-  Loader2
+  Loader2,
+  Bot
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -148,6 +149,12 @@ const PatientDashboard = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <Link to="/ai-assistant">
+              <Button variant="default" size="sm">
+                <Bot className="w-4 h-4 mr-2" />
+                AI Assistant
+              </Button>
+            </Link>
             <Link to="/chat">
               <Button variant="outline" size="sm">
                 <MessageCircle className="w-4 h-4" />

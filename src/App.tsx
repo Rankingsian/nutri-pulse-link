@@ -13,6 +13,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NurseRegistration from "./pages/NurseRegistration";
 import NotFound from "./pages/NotFound";
+import AIChatbot from "./components/AIChatbot";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,12 @@ const App = () => (
                 <ProtectedRoute>
                   <Chat />
                 </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/ai-assistant" 
+              element={
+                <AIChatbot />
               } 
             />
             <Route path="/forgot-password" element={<ForgotPassword />} />

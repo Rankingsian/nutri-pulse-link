@@ -22,7 +22,8 @@ import {
   TrendingUp,
   Pill,
   Utensils,
-  Bell
+  Bell,
+  Bot
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
@@ -295,6 +296,12 @@ const NurseDashboard = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <Link to="/ai-assistant">
+              <Button variant="default" size="sm">
+                <Bot className="w-4 h-4 mr-2" />
+                AI Assistant
+              </Button>
+            </Link>
             <Link to="/chat">
               <Button variant="outline" size="sm">
                 <MessageCircle className="w-4 h-4" />

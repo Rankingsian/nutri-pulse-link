@@ -552,33 +552,45 @@ const LandingPage = () => {
               </Button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/nurse-registration" className="flex-1">
-                <Button 
-                  variant="link" 
-                  className="text-secondary text-lg w-full"
-                >
-                  New nurse? Register here →
-                </Button>
-              </Link>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Don't have an account? Choose your registration:
+              </p>
+              <div className="flex flex-col gap-3">
+                <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="healthcare" 
+                      size="lg" 
+                      className="w-full justify-center"
+                    >
+                      <Heart className="w-5 h-5 mr-2" />
+                      Register as Patient
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Patient Registration</DialogTitle>
+                      <DialogDescription>
+                        Create your account to start your health journey
+                      </DialogDescription>
+                    </DialogHeader>
+                    <RegisterForm />
+                  </DialogContent>
+                </Dialog>
+                
+                <Link to="/nurse-registration" className="w-full">
+                  <Button 
+                    variant="healthcare" 
+                    size="lg" 
+                    className="w-full justify-center"
+                  >
+                    <Stethoscope className="w-5 h-5 mr-2" />
+                    Register as Nurse
+                  </Button>
+                </Link>
+              </div>
             </div>
-
-            <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
-              <DialogTrigger asChild>
-                <Button variant="link" className="text-primary text-lg">
-                  New patient? Register here →
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Patient Registration</DialogTitle>
-                  <DialogDescription>
-                    Create your account to start your health journey
-                  </DialogDescription>
-                </DialogHeader>
-                <RegisterForm />
-              </DialogContent>
-            </Dialog>
           </div>
 
           <div className="relative">
